@@ -4,7 +4,7 @@ A [Hacker School](http://www.hackerschool.com/) project
 
 ## It’s like a parser generator without the generator
 
-Very much a work in progress, I’d like to write a simple shift-reduce parser from the bottom up. Instead of writing a parser generator that generates a state machine, I’d like to evaluate the language’s rules as needed.
+Very much a work in progress, I’d like to write a simple shift-reduce parser from the ground up. Instead of writing a parser generator that generates a state machine, I’d like to evaluate the language’s rules as we go.
 
 The idea is to optimize for clarity and code length — nothing else.
 
