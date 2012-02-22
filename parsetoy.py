@@ -2,7 +2,12 @@ from collections import namedtuple
 
 Token = namedtuple('Token', ( 'type', 'value' ))
 
-tokens = [ Token('number', 10), Token('+', None), Token('number', 3), Token('+', None), Token('number', 5) ]
+tokens = [
+	Token('number', 10),
+	Token('+', None),
+	Token('number', 3),
+	Token('+', None), Token('number', 5)
+]
 stack  = []
 
 while True:
