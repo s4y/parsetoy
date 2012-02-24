@@ -53,10 +53,20 @@ tokens = list(lex((
 	LexRule(re.compile(r'-'), lambda match: Token('-', None))
 ), sys.argv[1]))
 
+print 'Lexer results:'
 print tokens
 
-print parse((
+print ''
+
+parsed =  parse((
 	ParseRule(None, ( 'number', ), lambda n: Token('expression', n.value)),
 	ParseRule('+', ( 'expression', '+', 'expression' ), lambda l, op, r: Token('expression', l.value + r.value) ),
 	ParseRule('-', ( 'expression', '-', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) )
 ), tokens)
+
+print 'Parser results:'
+print parsed
+
+if any(parsed):
+	print '\nValue:'
+	print parsed[-1].value
