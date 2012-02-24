@@ -7,6 +7,9 @@ Token = namedtuple('Token', ( 'type', 'value' ))
 LexRule = namedtuple('LexRule', ( 'expression', 'handler' ))
 ParseRule = namedtuple('ParseRule', ( 'operator', 'inputs', 'handler' ))
 
+class LexError(Exception):
+	pass
+
 def lex(grammar, input):
 	while len(input):
 		for rule in grammar:
@@ -19,8 +22,12 @@ def lex(grammar, input):
 				input = input[len(matchText):]
 				break
 		else:
-			raise Exception('Couldn’t parse your input')
+			raise LexError
 
+
+class ParseError(Exception):
+	def __init__(self, stack):
+		self.stack = stack
 
 def parse(rules, tokens):
 	stack = []
@@ -36,9 +43,7 @@ def parse(rules, tokens):
 			elif len(stack) <= 1:
 				break
 			else:
-				# Should be an exception, but want to see the stack for now
-				print "Parse error"
-				break
+				raise ParseError(stack)
 	return stack
 
 
@@ -46,30 +51,39 @@ if len(sys.argv) != 2:
 	print 'usage: %s pattern' % (sys.argv[0],)
 	sys.exit(1);
 
-tokens = list(lex((
-	LexRule(re.compile(r'\s+'), lambda match: None),
-	LexRule(re.compile(r'(?:\.[0-9]+|[0-9]+(?:.[0-9]+)?)'), lambda match: Token('number', float(match))),
-	LexRule(re.compile(r'\+'), lambda match: Token('+', None)),
-	LexRule(re.compile(r'-'), lambda match: Token('-', None)),
-	LexRule(re.compile(r'\('), lambda match: Token('(', None)),
-	LexRule(re.compile(r'\)'), lambda match: Token(')', None))
-), sys.argv[1]))
+try:
+	tokens = list(lex((
+		LexRule(re.compile(r'\s+'), lambda match: None),
+		LexRule(re.compile(r'(?:\.[0-9]+|[0-9]+(?:.[0-9]+)?)'), lambda match: Token('number', float(match))),
+		LexRule(re.compile(r'\+'), lambda match: Token('+', None)),
+		LexRule(re.compile(r'-'), lambda match: Token('-', None)),
+		LexRule(re.compile(r'\('), lambda match: Token('(', None)),
+		LexRule(re.compile(r'\)'), lambda match: Token(')', None))
+	), sys.argv[1]))
+except LexError:
+	print 'Couldn’t lex your input'
+	sys.exit(2)
 
 print 'Lexer results:'
 print tokens
 
 print ''
 
-parsed =  parse((
-	ParseRule(None, ( 'number', ), lambda n: Token('expression', n.value)),
-	ParseRule(None, ( '(', 'expression', ')' ), lambda l, ex, r: ex ),
-	ParseRule('+', ( 'expression', '+', 'expression' ), lambda l, op, r: Token('expression', l.value + r.value) ),
-	ParseRule('-', ( 'expression', '-', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) )
-), tokens)
+try:
+	parsed = parse((
+		ParseRule(None, ( 'number', ), lambda n: Token('expression', n.value)),
+		ParseRule(None, ( '(', 'expression', ')' ), lambda l, ex, r: ex ),
+		ParseRule('+', ( 'expression', '+', 'expression' ), lambda l, op, r: Token('expression', l.value + r.value) ),
+		ParseRule('-', ( 'expression', '-', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) )
+	), tokens)
+except ParseError as e:
+	print 'Parse error. Stack:'
+	print e.stack
 
-print 'Parser results:'
-print parsed
+else:
+	print 'Parser results:'
+	print parsed
 
-if any(parsed):
-	print '\nValue:'
-	print parsed[-1].value
+	if any(parsed):
+		print '\nValue:'
+		print parsed[-1].value
