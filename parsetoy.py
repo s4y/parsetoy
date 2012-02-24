@@ -33,7 +33,7 @@ def parse(rules, tokens):
 			if len(tokens):
 				stack.append(tokens[0])
 				del tokens[0]
-			elif len(stack) == 1:
+			elif len(stack) <= 1:
 				break
 			else:
 				# Should be an exception, but want to see the stack for now
