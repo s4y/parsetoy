@@ -50,7 +50,9 @@ tokens = list(lex((
 	LexRule(re.compile(r'\s+'), lambda match: None),
 	LexRule(re.compile(r'(?:\.[0-9]+|[0-9]+(?:.[0-9]+)?)'), lambda match: Token('number', float(match))),
 	LexRule(re.compile(r'\+'), lambda match: Token('+', None)),
-	LexRule(re.compile(r'-'), lambda match: Token('-', None))
+	LexRule(re.compile(r'-'), lambda match: Token('-', None)),
+	LexRule(re.compile(r'\('), lambda match: Token('(', None)),
+	LexRule(re.compile(r'\)'), lambda match: Token(')', None))
 ), sys.argv[1]))
 
 print 'Lexer results:'
@@ -60,6 +62,7 @@ print ''
 
 parsed =  parse((
 	ParseRule(None, ( 'number', ), lambda n: Token('expression', n.value)),
+	ParseRule(None, ( '(', 'expression', ')' ), lambda l, ex, r: ex ),
 	ParseRule('+', ( 'expression', '+', 'expression' ), lambda l, op, r: Token('expression', l.value + r.value) ),
 	ParseRule('-', ( 'expression', '-', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) )
 ), tokens)
