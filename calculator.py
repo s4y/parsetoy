@@ -34,36 +34,38 @@ class CalculatorGrammar:
 
 
 if __name__ == '__main__':
-	import sys
-
-	if len(sys.argv) != 2:
-		print('usage: %s pattern' % (sys.argv[0],))
-		sys.exit(1)
+	import sys, readline
 
 	parser = Parser(CalculatorGrammar.expressions, CalculatorGrammar.precedence)
 	lexer = Lexer(CalculatorGrammar.grammar)
 
-	try:
-		tokens = list(lexer.lex(sys.argv[1]))
-	except Lexer.LexError:
-		print('Couldn’t lex your input')
-		sys.exit(2)
+	while True:
+		try:
+			inputText = input('> ')
+			if not inputText:
+				continue
+			tokens = list(lexer.lex(inputText))
+		except EOFError:
+			print('')
+			sys.exit()
+		except Lexer.LexError:
+			print('Couldn’t lex your input')
+			continue
 
-	print('Lexer results:')
-	print(tokens)
+		print('Lexer results:')
+		print(tokens)
+		print('')
 
-	print('')
+		try:
+			parsed = parser.parse(tokens)
+		except Parser.ParseError as e:
+			print('Parse error. Stack:')
+			print(e.stack)
 
-	try:
-		parsed = parser.parse(tokens)
-	except Parser.ParseError as e:
-		print('Parse error. Stack:')
-		print(e.stack)
+		else:
+			print('Parser results:')
+			print(parsed)
 
-	else:
-		print('Parser results:')
-		print(parsed)
-
-		if any(parsed):
-			print('\nValue:')
-			print(parsed[-1].value)
+			if any(parsed):
+				print('\nValue:')
+				print(parsed[-1].value)
