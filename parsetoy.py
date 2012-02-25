@@ -18,12 +18,14 @@ class CalculatorGrammar:
 		LexRule(re.compile(r'-'), lambda match: Token('subtract', None)),
 		LexRule(re.compile(r'\*'), lambda match: Token('multiply', None)),
 		LexRule(re.compile(r'/'), lambda match: Token('divide', None)),
+		LexRule(re.compile(r'\^'), lambda match: Token('pow', None)),
 		LexRule(re.compile(r'\('), lambda match: Token('(', None)),
 		LexRule(re.compile(r'\)'), lambda match: Token(')', None))
 	)
 	precedence = (
 		OpPrecedence('left', { 'add', 'subtract' }),
 		OpPrecedence('left', { 'multiply', 'divide' }),
+		OpPrecedence('right', { 'pow' })
 	)
 	expressions = (
 		ParseRule(None, ( 'number', ), lambda n: Token('expression', n.value)),
@@ -32,6 +34,7 @@ class CalculatorGrammar:
 		ParseRule('subtract', ( 'expression', 'subtract', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) ),
 		ParseRule('multiply', ( 'expression', 'multiply', 'expression' ), lambda l, op, r: Token('expression', l.value * r.value) ),
 		ParseRule('divide', ( 'expression', 'divide', 'expression' ), lambda l, op, r: Token('expression', l.value / r.value) ),
+		ParseRule('pow', ( 'expression', 'pow', 'expression' ), lambda l, op, r: Token('expression', pow(l.value, r.value)) )
 	)
 
 
