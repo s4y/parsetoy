@@ -45,27 +45,28 @@ if __name__ == '__main__':
 			if not inputText:
 				continue
 			tokens = list(lexer.lex(inputText))
-		except EOFError:
+
+			print('Lexer results:')
+			print(tokens)
 			print('')
-			sys.exit()
-		except Lexer.LexError:
-			print('Couldn’t lex your input')
-			continue
 
-		print('Lexer results:')
-		print(tokens)
-		print('')
-
-		try:
 			parsed = parser.parse(tokens)
-		except Parser.ParseError as e:
-			print('Parse error. Stack:')
-			print(e.stack)
 
-		else:
 			print('Parser results:')
 			print(parsed)
 
 			if any(parsed):
 				print('\nValue:')
 				print(parsed[-1].value)
+		except EOFError:
+			print('')
+			sys.exit()
+		except Lexer.LexError:
+			print('Couldn’t lex your input')
+			continue
+		except Parser.ParseError as e:
+			print('Parse error. Stack:')
+			print(e.stack)
+		except:
+			import traceback
+			traceback.print_exc()
