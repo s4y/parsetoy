@@ -15,14 +15,22 @@ class CalculatorGrammar:
 		LexRule(re.compile(r'(?:\.[0-9]+|[0-9]+(?:\.[0-9]+)?)'), lambda match: Token('number', float(match))),
 		LexRule(re.compile(r'\+'), lambda match: Token('+', None)),
 		LexRule(re.compile(r'-'), lambda match: Token('-', None)),
+		LexRule(re.compile(r'\*'), lambda match: Token('*', None)),
+		LexRule(re.compile(r'/'), lambda match: Token('/', None)),
 		LexRule(re.compile(r'\('), lambda match: Token('(', None)),
 		LexRule(re.compile(r'\)'), lambda match: Token(')', None))
+	)
+	precedence = (
+		OpPrecedence('left', { '+', '-' }),
+		OpPrecedence('left', { '*', '/' })
 	)
 	expressions = (
 		ParseRule(None, ( 'number', ), lambda n: Token('expression', n.value)),
 		ParseRule(None, ( '(', 'expression', ')' ), lambda l, ex, r: ex ),
 		ParseRule('+', ( 'expression', '+', 'expression' ), lambda l, op, r: Token('expression', l.value + r.value) ),
-		ParseRule('-', ( 'expression', '-', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) )
+		ParseRule('-', ( 'expression', '-', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) ),
+		ParseRule('*', ( 'expression', '*', 'expression' ), lambda l, op, r: Token('expression', l.value * r.value) ),
+		ParseRule('/', ( 'expression', '/', 'expression' ), lambda l, op, r: Token('expression', l.value / r.value) )
 	)
 
 
@@ -54,13 +62,27 @@ class Parser:
 		"""Input couldn't be parsed under these rules"""
 		def __init__(self, stack):
 			self.stack = stack
-	def __init__(self, rules):
+	def __init__(self, rules, precedence):
 		self.rules = rules
+		self.precedence = precedence
+	def opPrecedence(self, op):
+		try:
+			return next( prec for prec in enumerate(self.precedence) if op in prec[1].operators )
+		except StopIteration:
+			return None
 	def parse(self, tokens):
 		stack = []
 		while True:
 			for rule in self.rules:
 				if len(stack) >= len(rule.inputs) and all( a == b for a, b in zip(rule.inputs, (t.type for t in stack[-len(rule.inputs):]))):
+					if rule.operator and len(tokens):
+						stackPrecedence = self.opPrecedence(rule.operator)
+						inputPrecedence = self.opPrecedence(tokens[0].type)
+						if inputPrecedence and stackPrecedence and (
+							(inputPrecedence[0] > stackPrecedence[0]) or
+							(inputPrecedence[0] == stackPrecedence[0] and stackPrecedence[1].associativity == 'right')
+						):
+							continue
 					stack[-len(rule.inputs):] = [rule.handler(*stack[-len(rule.inputs):])]
 					break
 			else:
@@ -80,7 +102,7 @@ def test():
 def main():
 	import sys
 
-	parser = Parser(CalculatorGrammar.expressions)
+	parser = Parser(CalculatorGrammar.expressions, CalculatorGrammar.precedence)
 	lexer = Lexer(CalculatorGrammar.grammar)
 
 	try:
