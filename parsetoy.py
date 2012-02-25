@@ -10,27 +10,28 @@ ParseRule = namedtuple('ParseRule', ( 'operator', 'inputs', 'handler' ))
 OpPrecedence = namedtuple('OpPrecedence', ( 'associativity', 'operators' ))
 
 class CalculatorGrammar:
+	from math import pow
 	grammar = (
 		LexRule(re.compile(r'\s+'), lambda match: None),
 		LexRule(re.compile(r'(?:\.[0-9]+|[0-9]+(?:\.[0-9]+)?)'), lambda match: Token('number', float(match))),
-		LexRule(re.compile(r'\+'), lambda match: Token('+', None)),
-		LexRule(re.compile(r'-'), lambda match: Token('-', None)),
-		LexRule(re.compile(r'\*'), lambda match: Token('*', None)),
-		LexRule(re.compile(r'/'), lambda match: Token('/', None)),
+		LexRule(re.compile(r'\+'), lambda match: Token('add', None)),
+		LexRule(re.compile(r'-'), lambda match: Token('subtract', None)),
+		LexRule(re.compile(r'\*'), lambda match: Token('multiply', None)),
+		LexRule(re.compile(r'/'), lambda match: Token('divide', None)),
 		LexRule(re.compile(r'\('), lambda match: Token('(', None)),
 		LexRule(re.compile(r'\)'), lambda match: Token(')', None))
 	)
 	precedence = (
-		OpPrecedence('left', { '+', '-' }),
-		OpPrecedence('left', { '*', '/' })
+		OpPrecedence('left', { 'add', 'subtract' }),
+		OpPrecedence('left', { 'multiply', 'divide' }),
 	)
 	expressions = (
 		ParseRule(None, ( 'number', ), lambda n: Token('expression', n.value)),
 		ParseRule(None, ( '(', 'expression', ')' ), lambda l, ex, r: ex ),
-		ParseRule('+', ( 'expression', '+', 'expression' ), lambda l, op, r: Token('expression', l.value + r.value) ),
-		ParseRule('-', ( 'expression', '-', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) ),
-		ParseRule('*', ( 'expression', '*', 'expression' ), lambda l, op, r: Token('expression', l.value * r.value) ),
-		ParseRule('/', ( 'expression', '/', 'expression' ), lambda l, op, r: Token('expression', l.value / r.value) )
+		ParseRule('add', ( 'expression', 'add', 'expression' ), lambda l, op, r: Token('expression', l.value + r.value) ),
+		ParseRule('subtract', ( 'expression', 'subtract', 'expression' ), lambda l, op, r: Token('expression', l.value - r.value) ),
+		ParseRule('multiply', ( 'expression', 'multiply', 'expression' ), lambda l, op, r: Token('expression', l.value * r.value) ),
+		ParseRule('divide', ( 'expression', 'divide', 'expression' ), lambda l, op, r: Token('expression', l.value / r.value) ),
 	)
 
 
@@ -41,8 +42,8 @@ class Lexer:
 		self.grammar = grammar
 	def lex(self, input):
 		"""Generate a series of tokens from an input string based on a grammar.
-			>>> list(lex(CalculatorGrammar.grammar, '1 + 5 +7 - 0.5'))
-			[Token(type='number', value=1.0), Token(type='+', value=None), Token(type='number', value=5.0), Token(type='+', value=None), Token(type='number', value=7.0), Token(type='-', value=None), Token(type='number', value=0.5)]
+			>>> list(Lexer(CalculatorGrammar.grammar).lex('1 + 5 +7 - 0.5'))
+			[Token(type='number', value=1.0), Token(type='add', value=None), Token(type='number', value=5.0), Token(type='add', value=None), Token(type='number', value=7.0), Token(type='subtract', value=None), Token(type='number', value=0.5)]
 		"""
 		while input:
 			for rule in self.grammar:
