@@ -41,10 +41,7 @@ class Parser:
 		self.rules = rules
 		self.precedence = precedence
 	def opPrecedence(self, op):
-		try:
-			return next( prec for prec in enumerate(self.precedence) if op in prec[1].operators )
-		except StopIteration:
-			return None
+		return next((prec for prec in enumerate(self.precedence) if op in prec[1].operators), None)
 	def parse(self, tokens):
 		stack = []
 		while True:
